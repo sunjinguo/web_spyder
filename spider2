@@ -1,0 +1,65 @@
+#爬取小猪短租网 –300个详情页租房信息 
+#1.实现每个租房详情页信息爬取 
+#2.编写函数实现租房列表页网址获取 
+#3.实现300个详情页租房信息
+from bs4 import BeautifulSoup
+import requests
+
+url='http://sh.xiaozhu.com/fangzi/4187532729.html'
+def get_info(url):
+    web_data = requests.get(url)
+    soup = BeautifulSoup(web_data.text, 'lxml')
+    title = soup.select('div.pho_info > h4 ')[0].text
+    address = soup.select('div.pho_info > p ')[0].get('title')
+    # address=soup.select('div.pho_info > p > span')[0].text
+    price = soup.select('div.day_l > span')[0].text
+    img = soup.select('#curBigImage')[0].get('src')
+    host_name = soup.select('a.lorder_name')[0].text
+    host_gender = soup.select('div.member_pic > div')[0].get('class')[0]
+
+    # print( title,address,price,img,host_name,host_gender)
+
+    def print_gender(class_name):
+        if class_name == 'member_ico1':
+            return '女'
+        if class_name == 'member_ico':
+            return '男'
+
+    data = {
+        'title': title,
+        'addrss': address,
+        'price': price,
+        'img': img,
+        'host_name': host_name,
+        'host_gender': print_gender(host_gender)
+    }
+    print(data)
+
+page_link=[]
+def get_page_link(page_number):
+    for pageNo in range(1,page_number):
+        full_url='http://bj.xiaozhu.com/search-duanzufang-p{}-0/'.format(pageNo)
+        wb_data=requests.get(full_url)
+        soup=BeautifulSoup(wb_data.text,'lxml')
+        for link in soup.select('a.resule_img_a'):
+            link_url=link.get('href')#link是所有的<a>标签信息，单独获取网址取属性href
+            #print(link.get('href'))
+            page_link.append(link_url)
+    #print(page_link)
+    return page_link
+
+
+urls=get_page_link(2)
+#print(urls)
+for single_url in urls:
+    get_info(single_url)
+
+
+#调用函数-实现网址的获取
+get_page_link(2)//page_number:获取几页房源信息
+'''
+观察网页列表特征P1 P2 P3：
+http://bj.xiaozhu.com/search-duanzufang-p1-0/
+http://bj.xiaozhu.com/search-duanzufang-p2-0/
+http://bj.xiaozhu.com/search-duanzufang-p3-0/
+'''
